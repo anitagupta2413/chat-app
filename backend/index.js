@@ -1,12 +1,10 @@
 const express = require("express");
 const connectDB = require("./connection/connection");
-const router = require("./routes/routes");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const Socket = require("socket.io");
 const http = require("http");
-const {updateRecipient , updateSender} = require('./controller/user/storingMessages');
-
+const router = require("./routes/routes");
 
 const app = express();
 const server = http.createServer(app);
@@ -17,43 +15,50 @@ connectDB("mongodb://127.0.0.1:27017/chatApp");
 app.use(cookieParser());
 app.use(cors());
 app.use(express.json());
-app.use("/user", router);
-app.use("/messages" , router);
+app.use("/api", router);
 
-const connectedUsers = {};
+const onLineUsers = {};
+const offLineUsers = {};
 
 io.on("connection", (socket) => {
-  console.log("a new client connected", socket.id);
+  
   socket.on("mapUserIdToSocketId", (user_id) => {
-    connectedUsers[user_id] = socket.id;
-    console.log('while connecting' , connectedUsers)
+    onLineUsers[user_id] = socket.id;
+
+    if (offLineUsers.hasOwnProperty(user_id)) {
+      if (offLineUsers[user_id].length > 0) {
+        const recepitentSocketId = onLineUsers[user_id];
+        offLineUsers[user_id].map((undeleviredMessages) => {
+          io.to(recepitentSocketId).emit("received", undeleviredMessages);
+        });
+      }
+    }
   });
 
-  socket.on('disconnect', () => {
-    for( user_id in connectedUsers){
-      if(connectedUsers[user_id] === socket.id){
-        delete connectedUsers[user_id];
+  socket.on("send", (newMessage) => {
+    const { receivedBy } = newMessage;
+    const recipientSocketId = onLineUsers[receivedBy];
+
+    if (recipientSocketId) {
+      io.to(recipientSocketId).emit("received", newMessage);
+    } else {
+      const exits = offLineUsers.hasOwnProperty(receivedBy);
+      if (exits) {
+        offLineUsers[receivedBy].push(newMessage);
+      } else {
+        offLineUsers[receivedBy] = [newMessage];
+      }
+    }
+  });
+
+  socket.on("disconnect", () => {
+    for (user_id in onLineUsers) {
+      if (onLineUsers[user_id] === socket.id) {
+        delete onLineUsers[user_id];
         break;
       }
     }
-  })
-
-  socket.on("sendMessage", ({ newMessage , senderId , receiverId }) => {
-    const recipientSocketId = connectedUsers[receiverId];
-
-    if (recipientSocketId) {
-      io.to(recipientSocketId).emit("receivedMessage", newMessage);
-    } 
-    else {
-      console.log(`Recipient with ID ${recipetentId} is not connected.`);
-    }
-
-    updateRecipient(newMessage , senderId , receiverId);
-      updateSender(newMessage , senderId , receiverId);
-
   });
-
-
 });
 
 server.listen("8000", () => {

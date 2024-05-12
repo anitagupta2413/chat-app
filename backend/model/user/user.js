@@ -10,48 +10,38 @@ const userSchema = new mongoose.Schema({
     unique: true,
     required: true,
   },
+  username : {
+    type : String,
+    unique : true,
+  },
   password: {
     type: String,
     required: true,
   },
-  sent : [
+  messages : [
     {
-      sendTo : {
+      pairId : {
         type : String
       },
-      messages : [
+      message : [
         {
           timeStamp : {
             type: Date,
             default: Date.now,
           },
           message : {
+            type : String
+          },
+          status : {
             type : String
           }
         }
       ]
     }
   ],
-  received : [
-    {
-      receivedFrom : {
-        type : String
-      },
-      messages : [
-        {
-          timeStamp : {
-            type: Date,
-            default: Date.now,
-          },
-          message : {
-            type : String
-          }
-        }
-      ]
-    }
-  ]
 });
 
 const user = mongoose.model('user' , userSchema);
 
 module.exports = user;
+

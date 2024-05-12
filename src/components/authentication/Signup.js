@@ -14,25 +14,27 @@ const Signup = () => {
     name: "",
     email: "",
     password: "",
+    userName: "",
   });
 
   const [validation, setValidation] = useState({
     name: "",
     email: "",
     password: "",
+    userName: "",
   });
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleName = (userName) => {
+  const handleName = (name) => {
     const digitRegex = /\d/;
     const specialCharacterRegex = /[!@#$%^&*(),.?":{}|<>]/;
-    if (digitRegex.test(userName)) {
+    if (digitRegex.test(name)) {
       setValidation((prevState) => ({
         ...prevState,
         name: "There should be no digit in name ",
       }));
-    } else if (specialCharacterRegex.test(userName)) {
+    } else if (specialCharacterRegex.test(name)) {
       setValidation((prevState) => ({
         ...prevState,
         name: "Name should not contain special characters",
@@ -42,11 +44,32 @@ const Signup = () => {
         ...prevState,
         name: "",
       }));
+      setInputValues((prevState) => ({
+        ...prevState,
+        name: name,
+      }));
     }
-    setInputValues((prevState) => ({
-      ...prevState,
-      name: userName,
-    }));
+  };
+
+  const handleUserName = (userName) => {
+    const hasSpecialCharacters = /[^\w]/.test(userName);
+    const hasSpaces = /\s/.test(userName);
+    if (hasSpecialCharacters || hasSpaces) {
+      setValidation((prevState) => ({
+        ...prevState,
+        userName:
+          "Username can only contain digits, characters, and underscores",
+      }));
+    } else {
+      setValidation((prevState) => ({
+        ...prevState,
+        userName: "",
+      }));
+      setInputValues((prevState) => ({
+        ...prevState,
+        userName: userName,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -55,21 +78,31 @@ const Signup = () => {
       !(
         validation.name === "" &&
         validation.email === "" &&
-        validation.password === ""
+        validation.password === "" &&
+        validation.userName === ""
       )
     ) {
       return false;
     } else {
       try {
-        const response = await axios.post("http://localhost:8000/user/signup", {
+        const userData = {
           name: inputValues.name,
           email: inputValues.email,
+          username: inputValues.userName,
           password: inputValues.password,
-        });
-        const { newUser, token } = response.data;
-        localStorage.setItem("user", JSON.stringify(newUser));
-        Cookies.set("uuid", token);
-        navigation("/");
+        };
+        await axios
+          .post("http://localhost:8000/api/signup", userData)
+          .then((response) => {
+            if (response.data.success) {
+              const { newUser, token } = response.data;
+              localStorage.setItem("user", JSON.stringify(newUser));
+              Cookies.set("uuid", token);
+              navigation("/");
+            } else {
+              alert("an unexpected error occurred");
+            }
+          });
       } catch (error) {
         if (error.response && error.response.status === 400) {
           const errorMessage = error.response.data.error;
@@ -78,7 +111,7 @@ const Signup = () => {
           const errorMessage = error.response.data.error;
           alert(errorMessage);
         } else {
-          console.log("internal server error" , error);
+          alert("internal server error", error);
         }
       }
     }
@@ -108,7 +141,6 @@ const Signup = () => {
                 color="warning"
                 variant="outlined"
                 type="text"
-                // sx={styles}
                 className="w-3/4"
                 value={inputValues.name}
                 onChange={(e) => handleName(e.target.value)}
@@ -119,11 +151,24 @@ const Signup = () => {
             </div>
             <div>
               <TextField
+                label="choose a username"
+                color="warning"
+                variant="outlined"
+                type="text"
+                className="w-3/4"
+                value={inputValues.userName}
+                onChange={(e) => handleUserName(e.target.value)}
+              />
+              <Typography className="text-red-500">
+                {validation.userName}
+              </Typography>
+            </div>
+            <div>
+              <TextField
                 label="Email"
                 color="warning"
                 variant="outlined"
                 type="email"
-                // sx={styles}
                 value={inputValues.email}
                 className="w-3/4"
                 onChange={(e) =>
@@ -143,7 +188,6 @@ const Signup = () => {
                 color="warning"
                 variant="outlined"
                 type={showPassword ? "text" : "password"}
-                // sx={styles}
                 className="w-3/4"
                 value={inputValues.password}
                 onChange={(e) =>
@@ -185,9 +229,8 @@ const Signup = () => {
             <div>
               <div>
                 <Typography variant="text">
-                  already have an account ?{" "}
+                  already have an account ?
                   <Link to="/login" className="text-blue-500">
-                    {" "}
                     Login
                   </Link>
                 </Typography>

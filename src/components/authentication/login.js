@@ -4,15 +4,62 @@ import { FaRegEyeSlash } from "react-icons/fa";
 import { IoEyeOutline } from "react-icons/io5";
 import { Link } from "react-router-dom";
 import image from "../assets/login.png";
+import axios from "axios";
+import Cookies from "js-cookie";
+import { useNavigate } from "react-router-dom";
 
-const Login = ({
-  handleSubmit,
-  email,
-  password,
-  handleEmailChange,
-  handlePasswordChange,
-}) => {
+const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
+  const navigation = useNavigate();
+
+  const [inputValues, setInputValues] = useState({
+    email: "",
+    password: "",
+  });
+
+  const handleEmailChange = (e) => {
+    setInputValues((prevData) => ({
+      ...prevData,
+      email: e.target.value,
+    }));
+  };
+
+  const handlePasswordChange = (e) => {
+    setInputValues((prevData) => ({
+      ...prevData,
+      password: e.target.value,
+    }));
+  };
+
+  const loginUser = async (e) => {
+    e.preventDefault();
+    try {
+      await axios
+        .post("http://localhost:8000/api/login", {
+          email: inputValues.email,
+          password: inputValues.password,
+        })
+        .then((response) => {
+          if (response.data.success) {
+            const { user, token } = response.data;
+            localStorage.setItem("user", JSON.stringify(user));
+            Cookies.set("uuid", token);
+            window.location.reload();
+            navigation("/");
+          }
+        });
+    } catch (error) {
+      if (error.response && error.response.status === 400) {
+        const errorMessage = error.response.data.error;
+        alert(errorMessage);
+      } else if (error.response && error.response.status === 401) {
+        const errorMessage = error.response.data.error;
+        alert(errorMessage);
+      } else {
+        console.log("internal server error", error);
+      }
+    }
+  };
   return (
     <div className="h-screen">
       <div className="grid grid-cols-2">
@@ -22,7 +69,7 @@ const Login = ({
         <div>
           <form
             className="flex flex-col gap-4 py-24"
-            onSubmit={handleSubmit}
+            onSubmit={loginUser}
             method="POST"
           >
             <Typography variant="h4" className="text-purple-700 font-bold">
@@ -37,7 +84,7 @@ const Login = ({
               type="text"
               // sx={styles}
               className="w-3/4"
-              value={email}
+              value={inputValues.email}
               onChange={handleEmailChange}
             />
 
@@ -48,7 +95,7 @@ const Login = ({
               type={showPassword ? "text" : "password"}
               // sx={styles}
               className="w-3/4"
-              value={password}
+              value={inputValues.password}
               onChange={handlePasswordChange}
             />
             <span

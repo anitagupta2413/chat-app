@@ -5,7 +5,7 @@ import Navbar from "react-bootstrap/Navbar";
 import NavDropdown from "react-bootstrap/NavDropdown";
 import Offcanvas from "react-bootstrap/Offcanvas";
 
-const Header = ({ name , handleLogout }) => {
+const Header = ({ name , handleLogout , handleDeleteAccount }) => {
   const [expand, setExpand] = useState(false);
   return (
     <>
@@ -26,7 +26,7 @@ const Header = ({ name , handleLogout }) => {
             <Offcanvas.Body>
               <Nav className="justify-content-end flex-grow-1 pe-3">
                 <Nav.Link href="#action1" onClick={handleLogout}>logout</Nav.Link>
-                <Nav.Link href="#action2">Link</Nav.Link>
+                <Nav.Link href="#action2" onClick={handleDeleteAccount}>Delete Account</Nav.Link>
                 <NavDropdown
                   title="Dropdown"
                   id={`offcanvasNavbarDropdown-expand-${expand}`}

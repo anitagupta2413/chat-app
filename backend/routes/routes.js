@@ -1,17 +1,32 @@
-const express = require('express');
-const {userSignUp , userLogIn , fetchUsers  } = require('../controller/user/authentication')
-const {fetchReceivedMessage , fetchSentMessages} = require('../controller/user/fetchingMessages');
-
+const express = require("express");
 const router = express.Router();
 
-router.post('/signup' , userSignUp);
+//importing controllers
+const {registerUser} = require("../controller/authentication/register");
+const {userLogIn} = require("../controller/authentication/login");
+const deleteUser = require("../controller/authentication/deleteAccount");
+const {fetchMessages} = require('../controller/messages/fetchingMessages');
+const {updateRecipient , updateSender} = require('../controller/messages/storingMessages');
+const {deleteChat} = require('../controller/messages/deleteMessages')
+const {fetchUsers} = require('../controller/users/fetchAllUsers')
 
-router.post('/login' , userLogIn);
 
-router.get('/fetch' , fetchUsers);
+//authentication
+router.post("/login", userLogIn);
+router.post("/signup", registerUser);
+router.delete("/deleteAccount", deleteUser);
 
-router.post('/sentMessages' , fetchSentMessages);
+//fetchingMessages
+router.get("/fetchMessages" , fetchMessages);
 
-router.post('/receivedMessages' , fetchReceivedMessage);
+//storing messages
+router.patch("/store/receivedMessages" , updateRecipient);
+router.patch("/store/sentMessages" , updateSender);
+
+//deleting messages
+router.patch("/deleteMessages", deleteChat);
+
+//fetching users
+router.get("/fetch/users" , fetchUsers);
 
 module.exports = router;
