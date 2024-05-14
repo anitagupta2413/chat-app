@@ -3,7 +3,8 @@ import ChatRoom from "../ViewComponents/ChatRoom";
 import socket from "../socket/Socket";
 import Users from "../ViewComponents/Users";
 import axios from "axios";
-import { decryptMessage, encryptMessage } from "../../encryption/aes";
+import { decryptMessage, encryptMessage } from "../encryption/aes";
+import ControlledCarousel from "../ViewComponents/Carousel/Carousel";
 
 const Home = ({
   loggedInUserName,
@@ -11,7 +12,7 @@ const Home = ({
   handleLogout,
   handleDeleteAccount,
 }) => {
-  const [recipientUserId, setRecipientUserId] = useState("");
+  const [recipient, setRecipient] = useState({});
   const [allMessages, setAllMessages] = useState([]);
   const [isloading, setIsLoading] = useState(true);
   const [noMessagesAvailable, setNoMessagesAvailable] = useState(false);
@@ -21,41 +22,51 @@ const Home = ({
     setMessage(e.target.value);
   };
 
-  const sendMessage = async () => {
-    const newMessage = {
-      sendBy: loggedInUserID,
-      receivedBy: recipientUserId,
-      message: encryptMessage(message),
-      timeStamp: new Date().toISOString(),
-      status: "sent",
-    };
+  const sendMessage = async (msg) => {
+    if (msg.trim() !== "") {
+      setNoMessagesAvailable(false);
+      const newMessage = {
+        sendBy: loggedInUserID,
+        receivedBy: recipient._id,
+        message: encryptMessage(msg),
+        timeStamp: new Date().toISOString(),
+        status: "sent",
+      };
+      console.log(newMessage);
 
-    await axios
-      .patch("http://localhost:8000/api/store/sentMessages", newMessage)
-      .then((response) => {
-        if (response.data.success) {
-          socket.emit("send", newMessage);
-          const dcryptedMessage = {
-            ...newMessage,
-            message: decryptMessage(newMessage.message),
-          };
-          setAllMessages((prev) => [...prev, dcryptedMessage]);
-        } else {
-          alert(response.data.message);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      });
+      await axios
+        .patch("http://localhost:8000/api/store/sentMessages", newMessage)
+        .then((response) => {
+          if (response.data.success) {
+            socket.emit("send", newMessage);
+            const dcryptedMessage = {
+              ...newMessage,
+              message: decryptMessage(newMessage.message),
+            };
+            setAllMessages((prev) => [...prev, dcryptedMessage]);
+          } else {
+            alert(response.data.message);
+          }
+        })
+        .catch((error) => {
+          console.log(error);
+          alert("error sending the message please try again");
+        });
+      setMessage("");
+    }
   };
 
   const handleMessageReceived = async (newMessage) => {
+    setNoMessagesAvailable(false);
     const receivedMessage = {
       ...newMessage,
       status: "received",
     };
     await axios
-      .patch("http://localhost:8000/api/store/receivedMessages", receivedMessage)
+      .patch(
+        "http://localhost:8000/api/store/receivedMessages",
+        receivedMessage
+      )
       .then((response) => {
         if (response.data.success) {
           const decryptedReceivedMessage = {
@@ -85,13 +96,13 @@ const Home = ({
     };
   }, []);
 
-  const handleChat = async (id) => {
-    setRecipientUserId(id);
+  const handleChat = async (row) => {
+    setRecipient(row);
     await axios
       .get("http://localhost:8000/api/fetchMessages", {
         params: {
           userId: loggedInUserID,
-          pairId: id,
+          pairId: row._id,
         },
       })
       .then((response) => {
@@ -115,9 +126,28 @@ const Home = ({
       });
   };
 
+  const handleClearChat = async () => {
+    try {
+      await axios
+        .patch("http://localhost:8000/api/deleteMessages", {
+          userId: loggedInUserID,
+          pairId: recipient._id,
+        })
+        .then((response) => {
+          if (response.data.success) {
+            alert(response.data.message);
+            setNoMessagesAvailable(true);
+            setAllMessages([]);
+          }
+        });
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className="flex h-screen">
-      <div className="w-1/3 overflow-hidden">
+      <div className="w-full sm:w-1/3 h-full">
         <Users
           userId={loggedInUserID}
           handleChat={handleChat}
@@ -126,16 +156,19 @@ const Home = ({
           handleDeleteAccount={handleDeleteAccount}
         />
       </div>
-      <div className="w-2/3 overflow-hidden">
-        {!isloading && (
+      <div className="hidden sm:block w-0 sm:w-2/3 overflow-hidden h-full">
+        {isloading ? (
+          <ControlledCarousel />
+        ) : (
           <ChatRoom
-            pairId={recipientUserId}
+            pair={recipient}
             allMessages={allMessages}
             userId={loggedInUserID}
             noMessagesAvailable={noMessagesAvailable}
             sendMessage={sendMessage}
             handleMessageChange={handleMessageChange}
             message={message}
+            handleClearChat={handleClearChat}
           />
         )}
       </div>

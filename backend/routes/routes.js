@@ -4,7 +4,7 @@ const router = express.Router();
 //importing controllers
 const {registerUser} = require("../controller/authentication/register");
 const {userLogIn} = require("../controller/authentication/login");
-const deleteUser = require("../controller/authentication/deleteAccount");
+const {deleteUser} = require("../controller/authentication/deleteAccount");
 const {fetchMessages} = require('../controller/messages/fetchingMessages');
 const {updateRecipient , updateSender} = require('../controller/messages/storingMessages');
 const {deleteChat} = require('../controller/messages/deleteMessages')

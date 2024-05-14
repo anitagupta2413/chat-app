@@ -34,7 +34,7 @@ const Users = ({
   }, []);
 
   return (
-    <div>
+    <div className="h-full">
       <div>
         <Header
           name={loggedInUserName}
@@ -43,12 +43,12 @@ const Users = ({
         />
       </div>
       <div>
-        <ul>
+        <div>
           {allUsers.map((row, index) => (
-            <li
-              onClick={() => handleChat(row._id)}
+            <div
+              onClick={() => handleChat(row)}
               key={index}
-              className="flex flex-row items-center border-b border-purple-700 gap-4 p-4 hover:border-purple-100"
+              className="flex flex-row items-center border-b border-purple-700 gap-4 p-4 hover:border-purple-100 w-full"
             >
               <div>
                 <Avatar
@@ -65,9 +65,9 @@ const Users = ({
                 <Typography variant="h6">{row.username}</Typography>
                 <Typography variant="text">{row.name}</Typography>
               </div>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
     </div>
   );

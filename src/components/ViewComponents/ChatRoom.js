@@ -1,39 +1,36 @@
 import React from "react";
 import axios from "axios";
+import { Avatar } from "@mui/material";
 
 const ChatRoom = ({
   userId,
-  pairId,
+  pair,
   allMessages,
   noMessagesAvailable,
   sendMessage,
   handleMessageChange,
   message,
+  handleClearChat
 }) => {
-  const handleClearChat = async () => {
-    try {
-      await axios
-        .patch("http://localhost:8000/api/deleteMessages", {
-          userId: userId,
-          pairId: pairId,
-        })
-        .then((response) => {
-          if (response.data.success) {
-            alert(response.data.message);
-          }
-        });
-    } catch (error) {
-      console.log(error);
-    }
-  };
 
   return (
     <div className="h-screen">
       <div className="h-1/6">
         <header className="bg-purple-800 text-white py-4 h-full">
           <div className="container mx-auto flex justify-between items-center">
-            <h1 className="text-xl font-bold">{pairId}</h1>
-            <button onClick={handleClearChat}>clear chat</button>
+            <div className="flex flex-row items-end justify-end gap-2">
+              <Avatar
+                style={{
+                  zIndex: 1,
+                  backgroundColor: "white",
+                  color: "#8B5CF6",
+                }}
+              >
+                {pair.name.charAt(0).toUpperCase()}
+              </Avatar>
+              <h4 className="text-xl font-bold">{pair.name}</h4>
+            </div>
+            <button className="bg-white text-black p-2 rounded-md" onClick={handleClearChat}>clear chat</button>
           </div>
         </header>
       </div>
@@ -42,32 +39,28 @@ const ChatRoom = ({
         style={{ overflow: "hidden" }}
       >
         {noMessagesAvailable ? (
-          <div>
-            <h1>no messages are available</h1>
+          <div className="h-full flex items-center justify-center">
+            <p className="bg-white inline-block px-4 py-2 shadow-custom text-black rounded-md">
+              start your first conversation
+            </p>
           </div>
         ) : (
           <div className="overflow-y-auto max-h-full scrollbar-hide">
             {allMessages?.map((messages, index) => (
-              <div
-                style={
-                  messages.status === "sent" ? styles.sent : styles.received
-                }
-                key={index}
-                className="mt-2 p-2"
-              >
-                <div className="w-50">
-                  <div
-                    className="inline-block p-2 rounded-md"
-                    style={
-                      messages.status === "sent"
-                        ? styles.sentInner
-                        : styles.receivedInner
-                    }
-                  >
-                    <span>{messages.message}</span>
-                    <span>{messages.timeStamp}</span>
+              <div key={index} className={`px-4 py-2 ${messages.status == "sent" ? 'flex justify-end' : 'flex justify-start'}`}>
+                {messages.status == "sent" ? (
+                  <div className="w-1/2 flex justify-end">
+                    <div className="inline-block bg-purple-800 rounded-md p-1 shadow-custom">
+                      <span className="text-white break-all">{messages.message}</span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="w-1/2 flex justify-start">
+                    <div className="inline-block bg-white rounded-md p-1 shadow-custom">
+                      <span className="text-black break-all">{messages.message}</span>
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -84,34 +77,13 @@ const ChatRoom = ({
         <button
           type="submit"
           className="bg-purple-500 text-white py-3 px-4 rounded w-2/12 "
-          onClick={sendMessage}
+          onClick={() => sendMessage(message)}
         >
           Send
         </button>
       </div>
     </div>
   );
-};
-
-const styles = {
-  sent: {
-    display: "flex",
-    justifyContent: "flex-end",
-  },
-  received: {
-    display: "flex",
-    justifyContent: "flex-start",
-  },
-  sentInner: {
-    display: "flex",
-    justifyContent: "flex-end",
-    backgroundColor: "blue",
-  },
-  receivedInner: {
-    display: "flex",
-    justifyContent: "flex-start",
-    backgroundColor: "white",
-  },
 };
 
 export default ChatRoom;

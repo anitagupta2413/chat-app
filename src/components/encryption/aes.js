@@ -1,6 +1,5 @@
 import CryptoJS from "crypto-js";
-
-const secretKey = 'hellochatApp';
+import {secretKey} from '../../secretKey' 
 
 const encryptMessage = (message) => {
     return CryptoJS.AES.encrypt(message , secretKey).toString(); 
