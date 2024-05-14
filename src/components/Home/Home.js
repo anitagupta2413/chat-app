@@ -4,7 +4,7 @@ import socket from "../socket/Socket";
 import Users from "../ViewComponents/Users";
 import axios from "axios";
 import { decryptMessage, encryptMessage } from "../encryption/aes";
-import ControlledCarousel from "../ViewComponents/Carousel/Carousel";
+import View from "../ViewComponents/View";
 
 const Home = ({
   loggedInUserName,
@@ -147,7 +147,7 @@ const Home = ({
 
   return (
     <div className="flex h-screen">
-      <div className="w-full sm:w-1/3 h-full">
+      <div className="w-1/3">
         <Users
           userId={loggedInUserID}
           handleChat={handleChat}
@@ -156,9 +156,9 @@ const Home = ({
           handleDeleteAccount={handleDeleteAccount}
         />
       </div>
-      <div className="hidden sm:block w-0 sm:w-2/3 overflow-hidden h-full">
+      <div className="w-2/3">
         {isloading ? (
-          <ControlledCarousel />
+          <View />
         ) : (
           <ChatRoom
             pair={recipient}

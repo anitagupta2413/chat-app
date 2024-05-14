@@ -34,7 +34,7 @@ const Users = ({
   }, []);
 
   return (
-    <div className="h-full">
+    <div className="h-full w-full break-all">
       <div>
         <Header
           name={loggedInUserName}
